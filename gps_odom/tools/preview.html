@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>gps_odom preview</title>
+        <meta charset="utf-8"/>
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+        
+        <!-- load ros -->
+        <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.js"></script>
+        <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.js"></script>
+        
+        <!-- load leaflet -->
+        <script type="text/javascript" src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+        
+        <!-- load jQuery -->
+        <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    </head>
+    
+    <body>
+        <!-- Info text div -->
+        <div class="status_text" style="font-family: Arial; padding-bottom:10px;"></div>
+        
+        <!-- Map div -->
+        <div id="map" style="width: 600px; height: 400px"></div>
+                
+        <script type="text/javascript">
+        
+            var map = L.map('map'); //.setView([38.350991, -121.2490313], 18);
+            var firstGps = true;
+            
+            //  marker for GPS waypoints
+            var redCircleIcon = L.icon({
+                iconUrl: 'red_circle.png',
+                iconRetinaUrl: 'red_circle@2x.png',
+                iconSize: [2, 2],
+            });
+            
+            function gpsCallback(message) {
+                if (firstGps) {
+                    map.setView([message.latitude, message.longitude], 18);
+                    firstGps = false;
+                }
+                //  add a red circle to the map
+                L.marker([message.latitude, message.longitude], {icon: redCircleIcon}).addTo(map);
+            }
+            
+            //  load tiles from landsat, 18 is max zoom level
+            L.tileLayer('http://services.opengeoserver.org/tiles/1.0.0/globe.aerial_EPSG3857/{z}/{x}/{y}.png?origin=nw', {
+                maxZoom: 18,
+                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+                    '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+                    'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+                id: 'examples.map-i86knfo3'
+            }).addTo(map);
+
+            //  connect to ROS
+            var ros = new ROSLIB.Ros({
+                url : 'ws://localhost:9090'
+            });
+            
+            ros.on('connection', function() {
+                $('div.status_text').text('Connected to rosbridge');
+            });
+            
+            ros.on('error', function(error) {
+                $('div.status_text').text('Error connecting to rosbridge: ', error);
+            });
+            
+            ros.on('close', function() {
+                $('div.status_text').text('Connection to rosbridge closed.');
+            });
+
+            //  subscribe to a GPS topic
+            var listener = new ROSLIB.Topic({
+                ros : ros,
+                name : '/ublox_gps/fix',
+                messageType : 'sensor_msgs/NavSatFix'
+            });
+            listener.subscribe(gpsCallback);
+        </script>
+    </body>
+</html>

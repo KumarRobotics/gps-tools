@@ -1,0 +1,25 @@
+WMMF-1
+# A World Magnetic Model (Format 1) file.  For documentation on the
+# format of this file see
+# http://geographiclib.sf.net/html/magnetic.html#magneticformat
+Name            igrf11
+Description     International Geomagnetic Reference Field 11th Generation
+URL             http://ngdc.noaa.gov/IAGA/vmod/igrf.html
+Publisher       International Association of Geomagnetism and Aeronomy
+ReleaseDate     2009-12-15
+DataCutOff      2009-10-01
+ConversionDate  2011-11-04
+DataVersion     1
+Radius          6371200
+NumModels       23
+Epoch           1900
+DeltaEpoch      5
+MinTime         1900
+MaxTime         2015
+MinHeight       -1000
+MaxHeight       600000
+
+# The coefficients are stored in a file obtained by appending ".cof" to
+# the name of this file.  The coefficients were obtained from IGRF11.COF
+# in the geomag70 distribution.
+ID              IGRF11-A

@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find imu_3dm_gx4)/launch/imu.launch"/>
+
+  <include file="$(find pressure_altimeter)/launch/pressure_altimeter.launch">
+    <arg name="fluid_pressure_topic" value="/imu_3dm_gx4/pressure"/>
+  </include>
+</launch>

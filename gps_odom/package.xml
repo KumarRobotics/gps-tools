@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<package>
+    <name>gps_odom</name>
+    <version>0.0.2</version>
+    <description>Converts IMU+GPS messages into odometry for UKF</description>
+
+    <maintainer email="gcross.code@icloud.com">gareth</maintainer>
+    <license>Proprietary</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+    <build_depend>geometry_msgs</build_depend>
+    <build_depend>kr_math</build_depend>
+    <build_depend>laser_altimeter</build_depend>
+    <build_depend>message_filters</build_depend>
+    <build_depend>nav_msgs</build_depend>
+    <build_depend>roscpp</build_depend>
+    <build_depend>roslib</build_depend>
+    <build_depend>sensor_msgs</build_depend>
+    <build_depend>std_msgs</build_depend>
+    <build_depend>ublox_msgs</build_depend>
+    <build_depend>pressure_altimeter</build_depend>
+    <build_depend>rviz_helper</build_depend>
+
+    <run_depend>geometry_msgs</run_depend>
+    <run_depend>kr_math</run_depend>
+    <run_depend>laser_altimeter</run_depend>
+    <run_depend>message_filters</run_depend>
+    <run_depend>nav_msgs</run_depend>
+    <run_depend>roscpp</run_depend>
+    <run_depend>roslib</run_depend>
+    <run_depend>sensor_msgs</run_depend>
+    <run_depend>std_msgs</run_depend>
+    <run_depend>ublox_msgs</run_depend>
+    <run_depend>pressure_altimeter</run_depend>
+    <run_depend>rviz_helper</run_depend>
+
+    <export>
+    </export>
+</package>

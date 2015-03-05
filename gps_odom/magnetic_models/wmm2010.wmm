@@ -1,0 +1,23 @@
+WMMF-1
+# A World Magnetic Model (Format 1) file.  For documentation on the
+# format of this file see
+# http://geographiclib.sf.net/html/magnetic.html#magneticformat
+Name            wmm2010
+Description     World Magnetic Model 2010
+URL             http://ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
+Publisher       National Oceanic and Atmospheric Administration
+ReleaseDate     2009-12-15
+DataCutOff      2009-10-01
+ConversionDate  2011-11-04
+DataVersion     1
+Radius          6371200
+Epoch           2010
+MinTime         2010
+MaxTime         2015
+MinHeight       -10000
+MaxHeight       1000000
+
+# The coefficients are stored in a file obtained by appending ".cof" to
+# the name of this file.  The coefficients were obtained from
+# WMM2010.COF in the geomag70 distribution.
+ID              WMM2010A

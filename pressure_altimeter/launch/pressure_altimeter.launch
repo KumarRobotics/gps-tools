@@ -1,0 +1,11 @@
+<launch>
+  <!-- Fluid pressure topic to which we should subscribe -->
+  <arg name="fluid_pressure_topic"/>
+
+  <node name="pressure_altimeter" pkg="pressure_altimeter"
+    type="pressure_altimeter" output="screen">
+    <!-- name of the frame in the header of the output -->
+    <param name="world_frame_id" type="string" value="/world"/>
+    <remap from="~fluid_pressure" to="$(arg fluid_pressure_topic)"/>
+  </node>
+</launch>

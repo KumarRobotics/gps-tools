@@ -1,0 +1,21 @@
+diff -rupN GeographicLib-1.35/man/MagneticField.pod GeographicLib-1.35-mod/man/MagneticField.pod
+--- GeographicLib-1.35/man/MagneticField.pod	2014-03-13 14:57:22.000000000 -0400
++++ GeographicLib-1.35-mod/man/MagneticField.pod	2014-08-04 17:37:35.413594413 -0400
+@@ -149,14 +149,14 @@ B<MagneticField> computes the geomagneti
+ following models
+ 
+     wmm2010, the World Magnetic Model 2010, which approximates the
+-      main magnetic field for the period 2010–2015.  See
++      main magnetic field for the period 2010 to 2015.  See
+       http://ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
+     igrf11, the International Geomagnetic Reference Field (11th
+       generation) which approximates the main magnetic field for
+-      the period 1900–2015.  See
++      the period 1900 to 2015.  See
+       http://ngdc.noaa.gov/IAGA/vmod/igrf.html
+     emm2010, the Enhanced Magnetic Model 2010, which approximates the
+-      main and crustal magnetic fields for the period 2010–2015.  See
++      main and crustal magnetic fields for the period 2010 to 2015.  See
+       http://ngdc.noaa.gov/geomag/EMM/index.html
+ 
+ These models approximate the magnetic field due to the earth's core and
