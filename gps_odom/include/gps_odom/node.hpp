@@ -31,6 +31,8 @@
 #include <GeographicLib/MagneticModel.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 
+#include <boost/optional.hpp>
+
 #include <pressure_altimeter/Height.h>
 #include <laser_altimeter/Height.h>
 #include "rviz_helper/marker_visualizer.hpp"
@@ -50,7 +52,6 @@ class Node {
   std::string fixedFrame_;
   ros::Publisher pubOdometry_;
   ros::Publisher pubRefPoint_;
-  ros::Subscriber subLaserHeight_;
 
   message_filters::Subscriber<sensor_msgs::Imu> subImu_;
   message_filters::Subscriber<sensor_msgs::NavSatFix> subFix_;
@@ -71,22 +72,26 @@ class Node {
       const sensor_msgs::ImuConstPtr &,
       const pressure_altimeter::HeightConstPtr &height);
 
-  void laserAltCallback(const laser_altimeter::HeightConstPtr &laser_height);
-
+  /// Load models from disk, if required.
+  bool loadModels();
+  
   //  geographic lib objects
   std::shared_ptr<GeographicLib::Geoid> geoid_;
   std::shared_ptr<GeographicLib::MagneticModel> magneticModel_;
-
-  bool refGpsSet_;
-  bool refLaserSet_;
+  
   GeographicLib::LocalCartesian refPoint_;
   double refPressureHeight_;
-  double refLaserHeight_;
-  double currentDeclination_;
+  sensor_msgs::NavSatFix refFix_;
+  bool refInitialized_{false};
+  
+  bool refPublished_{false};
+  double currentDeclination_{0}; ///< Magnetic declination from north
 
+  //  Parameters
   double gpsCovScaleFactor_;
-  bool shouldUseLaserInit_;
   bool shouldPublishTf_;
+  double gpsRefLat_{0}, gpsRefLon_{0};
+  bool useFixedRef_{false};
 
   kr::viz::TfPublisher tfPub_;
   kr::viz::TrajectoryVisualizer trajViz_;
