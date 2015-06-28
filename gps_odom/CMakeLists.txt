@@ -3,15 +3,12 @@ project(gps_odom)
 
 find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
-    kr_math
-    laser_altimeter
     message_filters
     nav_msgs
     roscpp
     roslib
     sensor_msgs
     std_msgs
-    ublox_msgs
     pressure_altimeter
     rviz_helper
     visualization_msgs
@@ -32,6 +29,8 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/node.cpp
     )
+
+add_definitions("-Wall -std=c++11")
 
 add_dependencies(${PROJECT_NAME}
     ${catkin_EXPORTED_TARGETS}

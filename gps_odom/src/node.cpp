@@ -1,8 +1,6 @@
 /*
  * node.cpp
  *
- *  Copyright (c) 2013 Nouka Technologies. All rights reserved.
- *
  *  This file is part of gps_odom.
  *
  *	Created on: 31/07/2014
@@ -13,7 +11,6 @@
 #include <ros/package.h>
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
-#include <kr_math/SO3.hpp>
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <cmath>
@@ -26,6 +23,7 @@ Node::Node(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
       pkgPath_(ros::package::getPath("gps_odom")),
       trajViz_(nh_),
       covViz_(nh_) {
+  
   if (pkgPath_.empty()) {
     ROS_WARN("Failed to find path for package");
   }
@@ -34,18 +32,24 @@ Node::Node(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
 
   //  scale factor for GPS covariance
   pnh_.param<double>("gps_covariance_scale_factor", gpsCovScaleFactor_, 1.0);
-  //  do we wait for laser altimeter to initialize height?
-  pnh_.param<bool>("laser_init", shouldUseLaserInit_, false);
   pnh_.param<bool>("publish_tf", shouldPublishTf_, false);
 
+  if (pnh_.hasParam("reference/latitude") && 
+      pnh_.hasParam("reference/longitude")) {
+    //  user has requested we use a fixed reference point
+    pnh_.getParam("reference/latitude", gpsRefLat_);
+    pnh_.getParam("reference/longitude", gpsRefLon_);
+    useFixedRef_ = true;
+    
+    ROS_INFO("Using GPS reference point: %.7f, %.7f", gpsRefLat_, gpsRefLon_);
+  }
+  
   //  IMU and GPS are synchronized separately
   subFix_.subscribe(nh_, "fix", kROSQueueSize);
   subFixTwist_.subscribe(nh_, "fix_velocity", kROSQueueSize);
 
   subImu_.subscribe(pnh_, "imu", kROSQueueSize);
   subHeight_.subscribe(pnh_, "pressure_height", kROSQueueSize);
-  subLaserHeight_ =
-      pnh_.subscribe("laser_height", 1, &Node::laserAltCallback, this);
 
   syncGps_ = std::make_shared<SynchronizerGPS>(
       TimeSyncGPS(kROSQueueSize), subFix_, subFixTwist_, subImu_, subHeight_);
@@ -58,10 +62,7 @@ Node::Node(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   pubRefPoint_ = nh_.advertise<sensor_msgs::NavSatFix>("reference", 1, true);
 
   ROS_INFO("Using a GPS covariance scale factor of %f", gpsCovScaleFactor_);
-  refGpsSet_ = false;
-  refLaserSet_ = false;
-  refLaserHeight_ = 0;
-  currentDeclination_ = 0.0;
+
   trajViz_.SetColor(kr::viz::colors::RED);
   trajViz_.SetAlpha(1);
   covViz_.SetColor(kr::viz::colors::RED);
@@ -74,56 +75,48 @@ void Node::gpsCallback(
     const sensor_msgs::ImuConstPtr &imu,
     const pressure_altimeter::HeightConstPtr &height) {
 
-  if (shouldUseLaserInit_ && !refLaserSet_) {
-    //  we are waiting for laser initialization height
-    ROS_INFO_THROTTLE(5.0,
-                      "gps_odom has not yet received laser initialization");
-    return;
-  }
-
   const double lat = navSatFix->latitude;
   const double lon = navSatFix->longitude;
   const double hWGS84 = navSatFix->altitude;
   const double tYears =
       navSatFix->header.stamp.toSec() / (365 * 24 * 3600.0) + 1970;
 
-  //  load geoid if required
-  if (!geoid_) {
-    try {
-      geoid_ = std::make_shared<GeographicLib::Geoid>("egm84-15",
-                                                      pkgPath_ + "/geoids");
-    }
-    catch (GeographicLib::GeographicErr &e) {
-      ROS_ERROR("Failed to load geoid. Reason: %s", e.what());
-      return;
-    }
-  }
-  //  load magnetic model, if required
-  if (!magneticModel_) {
-    try {
-      magneticModel_ = std::make_shared<GeographicLib::MagneticModel>(
-          "wmm2010", pkgPath_ + "/magnetic_models");
-    }
-    catch (GeographicLib::GeographicErr &e) {
-      ROS_ERROR("Failed to load model. Reason: %s", e.what());
-      return;
-    }
+  //  will load models from disk if possible
+  if (!loadModels()) {
+    return;
   }
 
   //  convert to height above sea level
   const double hMSL = geoid_->ConvertHeight(
       lat, lon, hWGS84, GeographicLib::Geoid::ELLIPSOIDTOGEOID);
 
-  //  generate linear coordinates
-  if (!refGpsSet_) {
-    refPoint_ = GeographicLib::LocalCartesian(lat, lon, 0);
+  if (!refInitialized_) {
+    
+    //  height is always taken from altimeter
     refPressureHeight_ = height->height;
-    refGpsSet_ = true;
-
-    //  publish only once
-    sensor_msgs::NavSatFix refFix = *navSatFix;
-    refFix.header.seq = 0;
-    pubRefPoint_.publish(refFix);
+    
+    if (useFixedRef_) {
+      //  initialize using user provided lat/lon
+      refPoint_ = GeographicLib::LocalCartesian(gpsRefLat_, gpsRefLon_, 0);
+      
+      //  create a NavSatFix to publish
+      refFix_.header = navSatFix->header;
+      refFix_.status.status = sensor_msgs::NavSatStatus::STATUS_FIX;
+      refFix_.status.status = sensor_msgs::NavSatStatus::SERVICE_GPS;
+      refFix_.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+      refFix_.latitude = gpsRefLat_;
+      refFix_.longitude = gpsRefLon_;
+      refFix_.altitude = refPressureHeight_;
+    } else {
+      //  initialize using first message received
+      refPoint_ = GeographicLib::LocalCartesian(lat, lon, 0); 
+      refFix_ = *navSatFix;
+      
+      ROS_INFO("Initialized reference point to %.7f, %.7f",
+               lat, lon);
+    }
+    
+    refInitialized_ = true;
   }
 
   double locX, locY, locZ;
@@ -158,8 +151,7 @@ void Node::gpsCallback(
   odometry.pose.pose.orientation.z = wQb.z();
   odometry.pose.pose.position.x = locX;
   odometry.pose.pose.position.y = locY;
-  odometry.pose.pose.position.z =
-      (height->height - refPressureHeight_ + refLaserHeight_);
+  odometry.pose.pose.position.z = height->height - refPressureHeight_;
 
   //  generate covariance (6x6 with order: x,y,z,rot_x,rot_y,rot_z)
   Eigen::Matrix<double, 6, 6> poseCovariance;
@@ -206,6 +198,14 @@ void Node::gpsCallback(
     }
   }
   pubOdometry_.publish(odometry);
+  
+  //  publish reference point
+  if (!refPublished_) {
+    //  publish only once
+    refFix_.header.seq = 0;
+    pubRefPoint_.publish(refFix_);
+    refPublished_ = true;
+  }
 
   //  publish tf stuff and trajectory visualizer
   if (shouldPublishTf_) {
@@ -216,15 +216,28 @@ void Node::gpsCallback(
   covViz_.PublishCovariance(odometry);
 }
 
-void Node::laserAltCallback(
-    const laser_altimeter::HeightConstPtr &laserHeight) {
-  if (shouldUseLaserInit_) {
-    refLaserHeight_ = laserHeight->max;
-    refLaserSet_ = true;
-    ROS_INFO_ONCE_NAMED("gps_odom_ref_height",
-                        "Initialized gps_odom w/ laser height: %f",
-                        refLaserHeight_);
+bool Node::loadModels() {
+  if (!geoid_) {
+    try {
+      geoid_ = std::make_shared<GeographicLib::Geoid>("egm84-15",
+                                                      pkgPath_ + "/geoids");
+    }
+    catch (GeographicLib::GeographicErr &e) {
+      ROS_ERROR("Failed to load geoid. Reason: %s", e.what());
+      return false;
+    }
   }
+  if (!magneticModel_) {
+    try {
+      magneticModel_ = std::make_shared<GeographicLib::MagneticModel>(
+          "wmm2010", pkgPath_ + "/magnetic_models");
+    }
+    catch (GeographicLib::GeographicErr &e) {
+      ROS_ERROR("Failed to load model. Reason: %s", e.what());
+      return false;
+    }
+  }
+  return true;
 }
 
 }  //  namespace gps_odom
