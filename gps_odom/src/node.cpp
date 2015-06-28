@@ -1,8 +1,6 @@
 /*
  * node.cpp
  *
- *  Copyright (c) 2013 Nouka Technologies. All rights reserved.
- *
  *  This file is part of gps_odom.
  *
  *	Created on: 31/07/2014

@@ -1,8 +1,6 @@
 /*
  * node.hpp
  *
- *  Copyright (c) 2014 Nouka Technologies. All rights reserved.
- *
  *  This file is part of gps_kf.
  *
  *	Created on: 03/08/2014
