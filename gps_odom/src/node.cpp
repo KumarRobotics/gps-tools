@@ -13,7 +13,6 @@
 #include <ros/package.h>
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
-#include <kr_math/SO3.hpp>
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <cmath>
