@@ -31,10 +31,7 @@
 #include <GeographicLib/MagneticModel.hpp>
 #include <GeographicLib/LocalCartesian.hpp>
 
-#include <boost/optional.hpp>
-
 #include <pressure_altimeter/Height.h>
-#include <laser_altimeter/Height.h>
 #include "rviz_helper/marker_visualizer.hpp"
 #include "rviz_helper/tf_publisher.hpp"
 

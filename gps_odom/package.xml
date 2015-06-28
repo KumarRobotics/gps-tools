@@ -10,7 +10,6 @@
     <buildtool_depend>catkin</buildtool_depend>
     <build_depend>geometry_msgs</build_depend>
     <build_depend>kr_math</build_depend>
-    <build_depend>laser_altimeter</build_depend>
     <build_depend>message_filters</build_depend>
     <build_depend>nav_msgs</build_depend>
     <build_depend>roscpp</build_depend>
@@ -23,7 +22,6 @@
 
     <run_depend>geometry_msgs</run_depend>
     <run_depend>kr_math</run_depend>
-    <run_depend>laser_altimeter</run_depend>
     <run_depend>message_filters</run_depend>
     <run_depend>nav_msgs</run_depend>
     <run_depend>roscpp</run_depend>

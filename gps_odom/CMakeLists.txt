@@ -4,7 +4,6 @@ project(gps_odom)
 find_package(catkin REQUIRED COMPONENTS
     geometry_msgs
     kr_math
-    laser_altimeter
     message_filters
     nav_msgs
     roscpp
